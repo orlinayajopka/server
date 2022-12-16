@@ -1,0 +1,76 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
+)
+
+type Note struct {
+	Name    string `json:"name"`
+	Surname string `json:"surname"`
+	Text    string `json:"text"`
+}
+
+var NoteStorage []Note
+
+func main() {
+	http.HandleFunc("/", HandlerHome)
+	http.HandleFunc("/save", HandlerSaveNote)
+	http.HandleFunc("/list_all", HandlerListAll)
+	log.Fatal(http.ListenAndServe(":4000", nil))
+}
+
+func HandlerHome(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	name := r.URL.Query().Get("name")
+	fmt.Fprintf(w, "Hello, %s", name)
+}
+
+func HandlerSaveNote(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	n := Note{}
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+
+	err = json.Unmarshal(body, &n)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+
+	NoteStorage = append(NoteStorage, n)
+	fmt.Fprintf(w, "The note was created %s\n", n.Name)
+}
+
+func HandlerListAll(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	JohnData, err := json.Marshal(NoteStorage)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(JohnData)
+}
