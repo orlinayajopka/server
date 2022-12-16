@@ -55,7 +55,9 @@ func HandlerSaveNote(w http.ResponseWriter, r *http.Request) {
 	}
 
 	NoteStorage = append(NoteStorage, n)
-	fmt.Fprintf(w, "The note was created %s\n", n.Name)
+	fmt.Fprintf(w, "Имя пользователя %s\n", n.Name)
+	fmt.Fprintf(w, "Фамилия %s\n", n.Surname)
+	fmt.Fprintf(w, "Заметка %s\n", n.Text)
 }
 
 func HandlerListAll(w http.ResponseWriter, r *http.Request) {
